@@ -1,0 +1,263 @@
+openapi: 3.0.2
+info:
+  title: Dynata Survey API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8090
+tags:
+  - name: members
+  - name: surveys
+paths:
+  /members/{surveyId}/completed:
+    get:
+      tags:
+        - members
+      operationId: listMembersOfCompletedSurvey
+      parameters:
+        - name: surveyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Fetch all the respondents who completed the questionnaire for the given survey id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMembersOfCompletedSurveyResponse'
+        400:
+          description: error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+  /members/{memberId}/points:
+    get:
+      tags:
+        - members
+      operationId: listMemberPoints
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Fetch the list of points (with the related survey id) that the member collected so far (the input is the member id)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMemberPointsResponse'
+        400:
+          description: error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+  /members/{surveyId}/potential:
+    get:
+      tags:
+        - members
+      operationId: listPotentialMembersOfSurvey
+      parameters:
+        - name: surveyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Fetch the list of members who can be invited for the given survey (not participated in that survey yet and active)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPotentialMembersOfSurveyResponse'
+        400:
+          description: error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+  /surveys/{memberId}:
+    get:
+      tags:
+        - surveys
+      operationId: listCompletedSurveysOfMember
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Fetch all the surveys that were completed by the given member id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCompletedSurveysResponse'
+        400:
+          description: error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+  /surveys/statistics:
+    get:
+      tags:
+        - surveys
+      operationId: listSurveysStatistics
+      responses:
+        200:
+          description: Fetch the list of surveys with statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSurveysStatisticsResponse'
+        400:
+          description: error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    QueryParamID:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+    GetMemberDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        emailAddress:
+          type: string
+        isActive:
+          type: integer
+    GetMemberPointsDTO:
+      type: object
+      properties:
+        surveyId:
+          type: integer
+        collectedPoints:
+          type: integer
+    GetSurveyDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        expectedCompletes:
+          type: integer
+        expectedPoints:
+          type: integer
+        filteredPoints:
+          type: integer
+    GetSurveyStatisticsDTO:
+      type: object
+      properties:
+        surveyId:
+          type: integer
+        surveyName:
+          type: string
+        numberOfCompletes:
+          type: integer
+        numberOfFilteredParticipants:
+          type: integer
+        numberOfRejectedParticipants:
+          type: integer
+        averageLengthOfTimeSpentOnSurvey:
+          type: number
+          format: digits
+    ListMembersOfCompletedSurveyResponse:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetMemberDTO'
+    ListMemberPointsResponse:
+      type: object
+      properties:
+        memberPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetMemberPointsDTO'
+    ListPotentialMembersOfSurveyResponse:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetMemberDTO'
+    ListCompletedSurveysResponse:
+      type: object
+      properties:
+        surveys:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetSurveyDTO'
+    ListSurveysStatisticsResponse:
+      type: object
+      properties:
+        surveys:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetSurveyStatisticsDTO'
+
+    Error:
+      type: object
+      properties:
+        entity:
+          type: string
+        message:
+          type: string
+        property:
+          type: string
+        invalidValue:
+          type: string
+
+  parameters:
+    QueryParamID:
+      in: query
+      name: id
+      required: true
+      schema:
+        type: integer
+        minimum: 0
+        format: int64
+      description: id

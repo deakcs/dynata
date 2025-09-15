@@ -1,0 +1,140 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.openapitools:openapi-generator-gradle-plugin:7.8.0"
+    }
+}
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'Dynata demo project for Spring Boot'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'org.openapi.generator'
+
+compileJava {
+    options.compilerArgs = [
+            '-Amapstruct.defaultComponentModel=spring'
+    ]
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    // OPENAPI server stub
+    implementation("io.swagger.core.v3:swagger-annotations:2.2.36")
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
+    implementation("javax.validation:validation-api:2.0.1.Final")
+    implementation("javax.servlet:javax.servlet-api:4.0.1")
+    implementation("org.openapitools:jackson-databind-nullable:0.2.7")
+
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.20.0")
+
+    implementation("org.mapstruct:mapstruct:1.6.3")
+    implementation ("org.mapstruct:mapstruct-processor:1.6.3")
+    annotationProcessor ("org.mapstruct:mapstruct-processor:1.6.3")
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation("org.mockito:mockito-core:5.19.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.19.0")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "generated/openapi/*"
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.9
+            }
+        }
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "generated/openapi/*"
+            ])
+        }))
+    }
+}
+
+openApiGenerate {
+    generatorName.set("spring")
+    inputSpec.set("$rootDir/src/main/resources/demoApi.yaml")
+    outputDir.set("$buildDir/generated")
+    apiPackage.set("generated.openapi.api")
+	//invokerPackage.set("openapi.invoker")
+    modelPackage.set("generated.openapi.model")
+    configOptions.set([
+            dateLibrary: "java8"
+    ])
+    skipValidateSpec = true
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir("$buildDir/generated/src/main/java/generated/openapi")
+        }
+    }
+}
+
+build.dependsOn jacocoTestCoverageVerification
+build.dependsOn jacocoTestReport
+
+compileJava.dependsOn tasks.named("openApiGenerate")
