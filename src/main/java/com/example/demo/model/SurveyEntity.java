@@ -14,11 +14,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Table(name = "SURVEY")
-@DynamicUpdate
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

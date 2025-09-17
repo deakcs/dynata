@@ -21,7 +21,7 @@ spring:
           batch_size : 1000
         order_inserts: true
 #        order_updates: true
-        generate_statistics: true
+#        generate_statistics: true
         default_schema: dynata
         dialect: org.hibernate.dialect.PostgreSQLDialect
       javax:
@@ -35,6 +35,12 @@ spring:
     schemas:
       - dynata
     create-schemas: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          "*"
 mybatis:
   mapperLocations: classpath*:**/*Mapper.xml
 initDataList:

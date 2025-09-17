@@ -10,16 +10,10 @@ import com.example.demo.startupdata.model.Participation;
 import com.example.demo.startupdata.model.Status;
 import com.example.demo.startupdata.model.Survey;
 import com.example.demo.startupdata.property.DataLoaderProperties;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import java.io.File;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,19 +42,19 @@ public class StartupDataLoader {
         log.info("Start inserting initial data.");
 
         var fileName = dataLoaderProperties.getFileLocation("Statuses.csv");
-        var statuses = loadObjectList(Status.class, fileName);
+        var statuses = ObjectLoader.loadObjectList(Status.class, fileName);
         var statusEntities = startupDataLoaderMapper.toStatusEntities(statuses);
 
         fileName = dataLoaderProperties.getFileLocation("Members.csv");
-        var members = loadObjectList(Member.class, fileName);
+        var members = ObjectLoader.loadObjectList(Member.class, fileName);
         var memberEntities = startupDataLoaderMapper.toMemberEntities(members);
 
         fileName = dataLoaderProperties.getFileLocation("Surveys.csv");
-        var surveys = loadObjectList(Survey.class, fileName);
+        var surveys = ObjectLoader.loadObjectList(Survey.class, fileName);
         var surveyEntities = startupDataLoaderMapper.toSurveyEntities(surveys);
 
         fileName = dataLoaderProperties.getFileLocation("Participation.csv");
-        var participations = loadObjectList(Participation.class, fileName);
+        var participations = ObjectLoader.loadObjectList(Participation.class, fileName);
         var participationEntities = startupDataLoaderMapper.toParticipationEntities(participations);
 
         statusRepository.saveAll(statusEntities);
@@ -80,24 +74,5 @@ public class StartupDataLoader {
                 fileName, participationEntities.size());
 
         log.info("Done inserting initial data.");
-    }
-
-    private <T> List<T> loadObjectList(Class<T> type, String fileName) {
-        try {
-            CsvSchema bootstrapSchema = CsvSchema
-                    .emptySchema()
-                    .withHeader();
-            File file = new ClassPathResource(fileName).getFile();
-            MappingIterator<T> readValues =
-                    new CsvMapper()
-                            .readerFor(type)
-                            .with(bootstrapSchema)
-                            .readValues(file);
-
-            return readValues.readAll();
-        } catch (Exception e) {
-            log.error("Error occurred while loading object list from file " + fileName, e);
-            throw new RuntimeException("Could not load file: " + fileName);
-        }
     }
 }

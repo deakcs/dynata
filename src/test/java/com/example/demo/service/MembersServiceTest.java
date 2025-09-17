@@ -168,8 +168,8 @@ class MembersServiceTest {
 
         // then
         var expected = List.of(
-                new GetMemberPointsDTO().surveyId(33).collectedPoints(2),
-                new GetMemberPointsDTO().surveyId(34).collectedPoints(22)
+                new GetMemberPointsDTO().surveyId(33).collectedPoints(3),
+                new GetMemberPointsDTO().surveyId(34).collectedPoints(33)
         );
         assertEquals(expected, result);
 

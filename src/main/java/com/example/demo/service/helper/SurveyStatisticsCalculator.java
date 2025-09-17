@@ -9,51 +9,48 @@ import com.example.demo.model.SurveyEntity;
 import generated.openapi.model.GetSurveyStatisticsDTO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-public class SurveyStatisticsCalculator {
+public final class SurveyStatisticsCalculator {
 
     public static List<GetSurveyStatisticsDTO> getSurveysWithStatistics(
             List<SurveyEntity> surveys, List<ParticipationEntity> participationEntities) {
 
-        List<GetSurveyStatisticsDTO> getSurveyStatisticsDTOs = new ArrayList<>();
+        Map<Integer, List<ParticipationEntity>> participationsBySurveyId = participationEntities.stream()
+                .collect(Collectors.groupingBy(ParticipationEntity::getSurveyId));
 
-        for (SurveyEntity surveyEntity : surveys) {
-            int numberOfRejectedParticipants = 0;
-            int umberOfFilteredParticipants = 0;
-            int numberOfCompletes = 0;
-            long averageLengthOfTimeSpentOnSurvey = 0;
-            int participationSize = 0;
+        return surveys.stream()
+                .map(survey -> {
+                    List<ParticipationEntity> surveysParticipations = participationsBySurveyId
+                            .getOrDefault(survey.getId(), List.of());
 
-            for (ParticipationEntity participationEntity : participationEntities) {
-                if (surveyEntity.getId().equals(participationEntity.getSurveyId())) {
-                    switch (participationEntity.getStatusId()) {
-                        case REJECTED -> numberOfRejectedParticipants++;
-                        case FILTERED -> umberOfFilteredParticipants++;
-                        case COMPLETED -> numberOfCompletes++;
-                    }
+                    Map<Integer, Long> statusCounts = surveysParticipations.stream()
+                            .collect(Collectors.groupingBy(ParticipationEntity::getStatusId, Collectors.counting()));
 
-                    var length = participationEntity.getLength();
-                    averageLengthOfTimeSpentOnSurvey += length == null ? 0 : length;
-                    participationSize++;
-                }
-            }
+                    long numberOfRejectedParticipants = statusCounts.getOrDefault(REJECTED, 0L);
+                    long numberOfFilteredParticipants = statusCounts.getOrDefault(FILTERED, 0L);
+                    long numberOfCompletes = statusCounts.getOrDefault(COMPLETED, 0L);
 
-            var getSurveyStatisticsDTO = new GetSurveyStatisticsDTO();
-            getSurveyStatisticsDTO.setSurveyId(surveyEntity.getId());
-            getSurveyStatisticsDTO.setSurveyName(surveyEntity.getName());
-            getSurveyStatisticsDTO.setNumberOfRejectedParticipants(numberOfRejectedParticipants);
-            getSurveyStatisticsDTO.numberOfFilteredParticipants(umberOfFilteredParticipants);
-            getSurveyStatisticsDTO.setNumberOfCompletes(numberOfCompletes);
-            getSurveyStatisticsDTO.setAverageLengthOfTimeSpentOnSurvey(
-                    new BigDecimal(Double.toString(averageLengthOfTimeSpentOnSurvey))
-                            .divide(new BigDecimal(Double.toString(participationSize)),
-                                    3, RoundingMode.HALF_UP));
+                    var lengthStats = surveysParticipations.stream()
+                            .map(ParticipationEntity::getLength)
+                            .filter(Objects::nonNull)
+                            .mapToLong(Integer::intValue)
+                            .summaryStatistics();
 
-            getSurveyStatisticsDTOs.add(getSurveyStatisticsDTO);
-        }
-
-        return getSurveyStatisticsDTOs;
+                    return new GetSurveyStatisticsDTO()
+                            .surveyId(survey.getId())
+                            .surveyName(survey.getName())
+                            .numberOfRejectedParticipants((int) numberOfRejectedParticipants)
+                            .numberOfFilteredParticipants((int) numberOfFilteredParticipants)
+                            .numberOfCompletes((int) numberOfCompletes)
+                            .averageLengthOfTimeSpentOnSurvey(
+                                    BigDecimal.valueOf(lengthStats.getAverage())
+                                            .setScale(3, RoundingMode.HALF_UP)
+                            );
+                })
+                .toList();
     }
 }

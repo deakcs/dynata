@@ -48,15 +48,11 @@ public class MembersService {
                 .map(ParticipationEntity::getSurveyId)
                 .toList();
 
-        /*
-            TODO: what should be put into collectedPoints?
-                expectedCompletes OR expectedPoints OR filteredPoints OR some calculated value?
-         */
         return surveysService.getSurveys(surveyIds)
                 .stream()
                 .map(s -> new GetMemberPointsDTO()
                         .surveyId(s.getId())
-                        .collectedPoints(s.getExpectedCompletes()))
+                        .collectedPoints(s.getExpectedPoints()))
                 .toList();
     }
 

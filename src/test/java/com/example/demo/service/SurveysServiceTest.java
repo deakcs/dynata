@@ -241,13 +241,17 @@ class SurveysServiceTest {
     void listSurveysStatistics() {
         // given
         var participationEntities = List.of(
+                new ParticipationEntity(0, 21, 2, 1, null),
                 new ParticipationEntity(1, 21, 1, 1, null),
-                new ParticipationEntity(2, 22, 1, 2, 11),
-                new ParticipationEntity(4, 23, 1, 3, 12),
-                new ParticipationEntity(5, 24, 1, 3, 13),
-                new ParticipationEntity(6, 25, 1, 3, 14),
-                new ParticipationEntity(7, 26, 1, 4, 15),
-                new ParticipationEntity(8, 27, 1, 4, null)
+                new ParticipationEntity(2, 22, 1, 2, null),
+                new ParticipationEntity(4, 23, 1, 3, null),
+                new ParticipationEntity(5, 24, 1, 3, null),
+                new ParticipationEntity(6, 25, 1, 4, 22),
+                new ParticipationEntity(7, 26, 1, 4, 34),
+                new ParticipationEntity(8, 27, 1, 4, 15),
+                new ParticipationEntity(9, 28, 1, 4, 24),
+                new ParticipationEntity(10, 29, 1, 4, 15),
+                new ParticipationEntity(11, 30, 1, 4, 9)
         );
         when(surveyRepository.findAll())
                 .thenReturn(List.of(
@@ -263,10 +267,10 @@ class SurveysServiceTest {
         var expected = List.of(new GetSurveyStatisticsDTO()
                 .surveyId(1)
                 .surveyName("name1")
-                .numberOfCompletes(2)
-                .numberOfFilteredParticipants(3)
+                .numberOfCompletes(6)
+                .numberOfFilteredParticipants(2)
                 .numberOfRejectedParticipants(1)
-                .averageLengthOfTimeSpentOnSurvey(new BigDecimal("9.286")));
+                .averageLengthOfTimeSpentOnSurvey(new BigDecimal("19.833")));
         assertEquals(expected, result);
     }
 }
